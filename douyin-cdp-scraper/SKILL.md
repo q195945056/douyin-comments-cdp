@@ -1,16 +1,15 @@
 ---
 name: douyin-cdp-scraper
-description: Scrape Douyin comments or work-level metrics through a real Chrome browser connected by Chrome DevTools Protocol (CDP). Use when the user asks to 抓取/导出/采集 抖音作品评论, 评论明细, 点赞数, 评论数, 收藏数, 转发数, 发布时间, or provides Douyin video/search/modal links for CSV exports.
+description: Scrape Douyin or Kuaishou comments and work-level metrics through a real Chrome browser connected by Chrome DevTools Protocol (CDP). Use when the user asks to 抓取/导出/采集 抖音/快手作品数据、作品评论、评论明细、点赞数、评论数、收藏数、转发数、发布时间, or provides Douyin/Kuaishou links for CSV exports.
 ---
 
-# Douyin CDP Scraper
+# Douyin/Kuaishou CDP Scraper
 
-Use a real Chrome instance with CDP enabled, then choose the appropriate capability reference:
+Use this unified skill for both Douyin and Kuaishou. The router scripts auto-detect the platform from each URL and call the correct platform-specific scraper.
 
 - For comment rows, follow `references/comments.md`.
 - For work-level metrics such as like count, comment count, collect count, share count, and publish time, follow `references/work-stats.md`.
-
-Both capabilities share the same Chrome CDP setup.
+- Platform-specific details remain available in `references/douyin-*.md` and `references/kuaishou-*.md` when debugging.
 
 ## Shared Chrome CDP Setup
 
@@ -29,23 +28,23 @@ env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy \
   node /Users/yanmingjun/.codex/skills/douyin-cdp-scraper/scripts/ensure_chrome_cdp.mjs
 ```
 
-The helper uses a fixed persistent profile at `~/.codex/chrome-profiles/douyin-cdp` by default. This keeps Douyin login state across workspaces and future skill runs. If the user wants a different persistent CDP profile, set `DOUYIN_CDP_USER_DATA_DIR=/absolute/path`.
+The helper uses a fixed persistent profile at `~/.codex/chrome-profiles/douyin-cdp` by default. This keeps login state across workspaces and future skill runs.
 
 ## Routing
 
 - If the user asks for comments, comment content, commenters, comment likes, or a max comment count, use `references/comments.md`.
 - If the user asks for work data, likes, comment count, collect count, share count, forward count, publish time, or batch metrics, use `references/work-stats.md`.
-- If the user asks for both comments and work stats, run the two scripts separately and report both output sets.
+- If the user asks for both comments and work stats, run the two router scripts separately and report both output sets.
 
 ## Operational Notes
 
 - The scripts require Node.js 22+ because they use built-in `fetch` and `WebSocket`.
 - Request escalation before starting Chrome, because it launches a GUI app.
 - In this Codex sandbox, run helper and scraper commands with the `env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy node ...` prefix so local CDP access is allowed and not routed through proxies.
-- Batch scraping supports `--concurrency N`. Use `1` for safest behavior, `2` or `3` for moderate parallelism. Avoid high values because every worker opens a separate Chrome page and Douyin may rate-limit or show verification prompts.
-- Comment and work stats scraping reuse the Chrome tabs they create across works, avoid bringing Chrome to the foreground, and close those tabs after the queue finishes. Comment scraping creates tabs in the background when Chrome supports it.
-- Do not use a workspace-local `--user-data-dir` unless the user explicitly wants an isolated throwaway profile. It causes repeated Douyin login prompts when the skill is used from different workspaces.
-- A normal already-open Chrome profile cannot be retrofitted with CDP. The user should log in once inside the persistent CDP Chrome window; future runs should reuse that profile.
+- Batch scraping supports `--concurrency N`. Use `1` for safest behavior, `2` or `3` for moderate parallelism.
+- The router accepts mixed Douyin and Kuaishou links in one command. Unsupported URLs should fail fast instead of guessing.
+- Douyin work stats and comments use normal Chrome behavior. Kuaishou work stats emulate iPhone Safari; Kuaishou comments use normal Chrome and do not emulate mobile.
+- Comment and work stats scraping reuse Chrome tabs where the platform script supports it, avoid bringing Chrome to the foreground, and close created tabs after the queue finishes.
 - Keep proxy variables unset for local CDP calls; otherwise Node may route `127.0.0.1` through a proxy.
-- If outputs are empty, inspect the Chrome page for login, CAPTCHA, age gate, network failure, or a non-video page. Do not bypass CAPTCHA; ask the user to handle it.
+- If outputs are empty, inspect the Chrome page for login, CAPTCHA, age gate, network failure, risk-control, or a non-video page. Do not bypass CAPTCHA; ask the user to handle it.
 - Do not inspect cookies, local storage, passwords, or browser profile files.
