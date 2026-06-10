@@ -280,14 +280,15 @@ function collectWorkStats(value, targetId, out = []) {
     return out;
   }
 
-  const rawId = value.photo_id || value.photoId || value.photo_id_str || value.item_id || value.itemId || value.id;
-  const idMatches = !targetId || !rawId || String(rawId) === String(targetId);
+  const rawId = value.photo_id || value.photoId || value.photoIdStr || value.photo_id_str || value.item_id || value.itemId || value.id;
+  const idMatches = targetId ? rawId && String(rawId) === String(targetId) : !rawId;
   const looksLikeWork =
     value.statistics ||
     value.stats ||
     value.photo_stats ||
     value.photo_id ||
     value.photoId ||
+    value.userName ||
     value.caption ||
     value.likeCount ||
     value.commentCount ||
@@ -387,9 +388,31 @@ async function closePage(cdp, page) {
   cdp.close();
 }
 
+async function emulateIPhone(cdp) {
+  await cdp.send('Emulation.setDeviceMetricsOverride', {
+    width: 390,
+    height: 844,
+    deviceScaleFactor: 3,
+    mobile: true,
+    screenWidth: 390,
+    screenHeight: 844,
+    positionX: 0,
+    positionY: 0,
+  });
+  await cdp.send('Emulation.setTouchEmulationEnabled', {
+    enabled: true,
+    maxTouchPoints: 5,
+  });
+  await cdp.send('Emulation.setUserAgentOverride', {
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Mobile/15E148 Safari/604.1',
+    platform: 'iPhone',
+  });
+}
+
 async function createScrapeSession(options) {
   const page = await createPage(options.cdpBase);
   const cdp = await connect(page.webSocketDebuggerUrl);
+  await emulateIPhone(cdp);
   await cdp.send('Page.enable');
   await cdp.send('Runtime.enable');
   await cdp.send('Network.enable', { maxResourceBufferSize: 10000000, maxTotalBufferSize: 50000000 });
@@ -432,7 +455,7 @@ async function scrapeOne(target, options, session) {
     for (const candidate of statsCandidates) {
       const candidateId = candidate.candidate_photo_id;
       const matches = effectivePhotoId
-        ? (!candidateId || String(candidateId) === String(effectivePhotoId))
+        ? candidateId && String(candidateId) === String(effectivePhotoId)
         : !candidateId;
       if (matches) stats = mergeWorkStats(stats, candidate);
     }
@@ -494,12 +517,6 @@ async function scrapeOne(target, options, session) {
     const apolloStats = normalizeWorkStats(apolloRaw, 'apollo');
     if (apolloRaw.photoId && apolloStats) statsCandidates.push({ ...apolloStats, candidate_photo_id: String(apolloRaw.photoId) });
     rebuildStats();
-    stats = mergeWorkStats(stats, apolloStats);
-    stats = stats || {};
-
-    const publish = normalizePublishTime(stats.publish_time || stats.publish_time_raw);
-    if (!stats.publish_time && publish.formatted) stats.publish_time = publish.formatted;
-    if (!stats.publish_timestamp && publish.timestamp) stats.publish_timestamp = publish.timestamp;
 
     const finalUrl = finalState.href || target.url;
     const finalWork = workFromUrl(finalUrl);
@@ -508,6 +525,11 @@ async function scrapeOne(target, options, session) {
       effectivePhotoId = finalId;
       rebuildStats();
     }
+    stats = stats || {};
+    const publish = normalizePublishTime(stats.publish_time || stats.publish_time_raw);
+    if (!stats.publish_time && publish.formatted) stats.publish_time = publish.formatted;
+    if (!stats.publish_timestamp && publish.timestamp) stats.publish_timestamp = publish.timestamp;
+
     const finalType = finalWork.type || target.itemType;
     const finalTarget = {
       ...target,
@@ -521,7 +543,7 @@ async function scrapeOne(target, options, session) {
       photoId: finalTarget.photoId,
       itemType: finalTarget.itemType,
       author_nickname: stats.author_nickname || null,
-      title: stats.work_title || finalState.title || null,
+      title: stats.work_title || (finalState.title && finalState.title !== '快手' ? finalState.title : null),
       scrapedAt: new Date().toISOString(),
       ...stats,
       stats,

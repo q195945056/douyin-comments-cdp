@@ -44,6 +44,7 @@ The helper uses a fixed persistent profile at `~/.codex/chrome-profiles/kuaishou
 - In this Codex sandbox, run helper and scraper commands with the `env -u HTTP_PROXY -u HTTPS_PROXY -u http_proxy -u https_proxy node ...` prefix so local CDP access is allowed and not routed through proxies.
 - Batch scraping supports `--concurrency N`. Use `1` for safest behavior, `2` or `3` for moderate parallelism.
 - Comment and work stats scraping reuse the Chrome tabs they create across works, avoid bringing Chrome to the foreground, and close those tabs after the queue finishes. The scripts create tabs in the background when Chrome supports it.
+- Kuaishou scraping emulates iPhone Safari by default with a mobile viewport, touch input, and iPhone User-Agent.
 - Kuaishou share pages may return risk-control or recommendation redirects. The scripts record the final `photoId` and leave unavailable fields blank rather than guessing.
 - If outputs are empty, inspect the Chrome page for login, CAPTCHA, age gate, network failure, risk-control, or a non-video page. Do not bypass CAPTCHA; ask the user to handle it.
 - Do not inspect cookies, local storage, passwords, or browser profile files.
