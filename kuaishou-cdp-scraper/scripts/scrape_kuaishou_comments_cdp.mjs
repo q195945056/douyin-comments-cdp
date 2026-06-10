@@ -261,31 +261,9 @@ async function closePage(cdp, page) {
   cdp.close();
 }
 
-async function emulateIPhone(cdp) {
-  await cdp.send('Emulation.setDeviceMetricsOverride', {
-    width: 390,
-    height: 844,
-    deviceScaleFactor: 3,
-    mobile: true,
-    screenWidth: 390,
-    screenHeight: 844,
-    positionX: 0,
-    positionY: 0,
-  });
-  await cdp.send('Emulation.setTouchEmulationEnabled', {
-    enabled: true,
-    maxTouchPoints: 5,
-  });
-  await cdp.send('Emulation.setUserAgentOverride', {
-    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Mobile/15E148 Safari/604.1',
-    platform: 'iPhone',
-  });
-}
-
 async function createScrapeSession(options) {
   const page = await createPage(options.cdpBase);
   const cdp = await connect(page.webSocketDebuggerUrl);
-  await emulateIPhone(cdp);
   await cdp.send('Page.enable');
   await cdp.send('Runtime.enable');
   await cdp.send('Network.enable', { maxResourceBufferSize: 10000000, maxTotalBufferSize: 50000000 });
