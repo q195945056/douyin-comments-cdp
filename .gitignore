@@ -3,6 +3,9 @@
 douyin-comments/
 douyin_comments_*.csv
 douyin_comments_*.json
+douyin_work_stats_*.csv
+douyin_work_stats_*.json
+douyin-work-stats/
 batch_*urls*.txt
 cdp-eval.mjs
 debug_*.mjs

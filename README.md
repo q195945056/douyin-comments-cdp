@@ -1,6 +1,11 @@
 # 抖音评论抓取 Codex Skill
 
-这个仓库提供一个 Codex skill：通过带 Chrome DevTools Protocol（CDP）的真实 Chrome 浏览器，抓取抖音作品评论，并导出 JSON 和 CSV 文件。
+这个仓库提供两个 Codex skill：通过带 Chrome DevTools Protocol（CDP）的真实 Chrome 浏览器，分别抓取抖音作品评论和作品数据，并导出 JSON / CSV 文件。
+
+## Skill 列表
+
+- `douyin-comments-cdp`：抓取评论明细。
+- `douyin-work-stats-cdp`：抓取作品数据，包括点赞数、评论数、收藏数、转发数、发布时间。
 
 ## 推荐安装方式
 
@@ -11,12 +16,27 @@
 https://github.com/q195945056/douyin-comments-cdp/tree/main/douyin-comments-cdp
 ```
 
+安装作品数据抓取 skill：
+
+```text
+安装这个 skill：
+https://github.com/q195945056/douyin-comments-cdp/tree/main/douyin-work-stats-cdp
+```
+
 或者使用更明确的 `repo + path` 写法：
 
 ```text
 用 skill-installer 安装 GitHub 上的 skill：
 repo: q195945056/douyin-comments-cdp
 path: douyin-comments-cdp
+```
+
+作品数据抓取 skill 对应：
+
+```text
+用 skill-installer 安装 GitHub 上的 skill：
+repo: q195945056/douyin-comments-cdp
+path: douyin-work-stats-cdp
 ```
 
 安装完成后，重启 Codex，让新的 skill 生效。
@@ -29,11 +49,12 @@ path: douyin-comments-cdp
 mkdir -p ~/.codex/skills
 git clone https://github.com/q195945056/douyin-comments-cdp.git /tmp/douyin-comments-cdp
 cp -R /tmp/douyin-comments-cdp/douyin-comments-cdp ~/.codex/skills/
+cp -R /tmp/douyin-comments-cdp/douyin-work-stats-cdp ~/.codex/skills/
 ```
 
 然后重启 Codex。
 
-## 使用方式
+## 评论抓取使用方式
 
 单个作品：
 
@@ -54,6 +75,34 @@ https://www.douyin.com/video/...
 ```text
 [$douyin-comments-cdp] 抓取这个作品前 1000 条评论，导出到 ./douyin-comments：
 https://www.douyin.com/video/...
+```
+
+## 作品数据抓取使用方式
+
+单个作品：
+
+```text
+[$douyin-work-stats-cdp] 抓取这个抖音作品的点赞、评论、收藏、转发数和发布时间：https://www.douyin.com/video/...
+```
+
+多个作品：
+
+```text
+[$douyin-work-stats-cdp] 批量抓取这些作品数据：
+https://www.douyin.com/video/...
+https://www.douyin.com/video/...
+```
+
+并发抓取：
+
+```text
+[$douyin-work-stats-cdp] 批量抓取 urls.txt 里的作品数据，并发数 2，导出到 ./douyin-work-stats
+```
+
+作品数据输出字段包括：
+
+```text
+like_count, comment_count, collect_count, share_count, publish_time, publish_timestamp
 ```
 
 ## 使用前准备
